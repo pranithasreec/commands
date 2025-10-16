@@ -1,0 +1,208 @@
+# backend/Dockerfile
+FROM python:3.10-slim
+WORKDIR /app
+COPY . .
+RUN pip install -r requirements.txt
+CMD ["python", "app.py"]
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Multi-Service Web Application</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f4f8;
+      color: #333;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+    header {
+      background-color: #005f73;
+      color: white;
+      padding: 15px 30px;
+      border-radius: 5px;
+      margin-bottom: 30px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    h1 {
+      margin: 0;
+    }
+    main {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      max-width: 600px;
+      width: 100%;
+      text-align: center;
+    }
+    p {
+      font-size: 1.1rem;
+      line-height: 1.5;
+      margin-top: 1em;
+      color: #555;
+    }
+    footer {
+      margin-top: auto;
+      padding: 15px 0;
+      font-size: 0.9rem;
+      color: #777;
+    }
+    a {
+      color: #0077cc;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Welcome to the Multi-Service Web Application</h1>
+  </header>
+  <main>
+    <p>This frontend is served by <strong>Nginx</strong>.</p>
+    <p>The backend service runs separately, handling application logic and database interactions.</p>
+    <p>This application is built with Docker containers, orchestrated locally and on Docker Swarm.</p>
+    <p>Feel free to explore the backend API at <a href="http://localhost:5000" target="_blank">http://localhost:5000</a> (if running locally).</p>
+  </main>
+  <footer>
+    &copy; 2025 Multi-Service App &mdash; Built with Docker
+  </footer>
+</body>
+</html>
+
+
+
+
+from flask import Flask
+
+app = Flask(__name__)
+
+@app.route('/')
+def hello():
+    return "Hello from Flask backend!"
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
+
+
+
+
+version: '3.8'
+
+services:
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydb
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - app_network
+
+  backend:
+    image: flask-backend
+    environment:
+      DB_HOST: db
+      DB_USER: myuser
+      DB_PASSWORD: mypassword
+      DB_NAME: mydb
+    volumes:
+      - app_data:/app/data
+    deploy:
+      replicas: 3
+      restart_policy:
+        condition: on-failure
+    networks:
+      - app_network
+
+  frontend:
+    image: nginx:latest
+    ports:
+  - target: 80
+    published: 8080
+    protocol: tcp
+    mode: host
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+    depends_on:
+      - backend
+    networks:
+      - app_network
+
+volumes:
+  db_data:
+  app_data:
+
+networks:
+  app_network:
+
+
+
+stack.yml
+
+
+version: '3.8'
+
+services:
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydb
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - app_network
+
+  backend:
+    image: flask-backend
+    environment:
+      DB_HOST: db
+      DB_USER: myuser
+      DB_PASSWORD: mypassword
+      DB_NAME: mydb
+    volumes:
+      - app_data:/app/data
+    deploy:
+      replicas: 3
+      restart_policy:
+        condition: on-failure
+    networks:
+      - app_network
+
+  frontend:
+    image: nginx:latest
+    ports:
+      - "8088:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+    depends_on:
+      - backend
+    networks:
+      - app_network
+
+volumes:
+  db_data:
+  app_data:
+
+networks:
+  app_network:
+
+
+
